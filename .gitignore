@@ -1,3 +1,7 @@
 # ignores following folders
 bin/
 build/
+*.exe
+*.obj
+*.ilk
+*.pdb
