@@ -33,7 +33,7 @@
 				"gdi32.lib",
 				"shell32.lib",
 				"/SUBSYSTEM:CONSOLE",
-				"/MACHINE:X64",
+				"/NODEFAULTLIB:MSVCRT",
 				"${workspaceFolder}/${fileBasenameNoExtension}.obj"
 			],
 			"dependsOn": [
