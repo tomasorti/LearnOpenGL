@@ -9,6 +9,11 @@ void processInput(GLFWwindow *window);
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+int windowPos[2] = {0, 0};
+int windowSize[2] = {SCR_WIDTH, SCR_HEIGHT};
+
+GLFWmonitor* monitor;
+bool isFullScreen = false;
 
 int main()
 {
@@ -25,7 +30,7 @@ int main()
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Full Screen toggle", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -33,6 +38,10 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
+
+    monitor = glfwGetPrimaryMonitor();
+    
+
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // glad: load all OpenGL function pointers
@@ -74,6 +83,25 @@ void processInput(GLFWwindow *window)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    if(glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
+
+        if (isFullScreen) {
+            // restore last window size and position
+            glfwSetWindowMonitor(window, nullptr, windowPos[0], windowPos[1], windowSize[0], windowSize[1], GLFW_DONT_CARE);
+        }
+        else {
+            const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+
+            // backup window position and window size
+            glfwGetWindowPos(window, &windowPos[0], &windowPos[1]);
+            glfwGetWindowSize(window, &windowSize[0], &windowSize[1]);
+
+            // Set full-screen
+            glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        }
+        isFullScreen = !isFullScreen;
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
