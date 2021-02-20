@@ -5,7 +5,6 @@
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow *window);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -178,7 +177,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     } else if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
-                GLint rastMode[2];
+        GLint rastMode[2];
         glGetIntegerv(GL_POLYGON_MODE, &rastMode[0]);
 
         // Switch modes depending on current rasterizing mode.
