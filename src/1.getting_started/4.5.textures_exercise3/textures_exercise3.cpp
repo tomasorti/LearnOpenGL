@@ -1,5 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #include <learnopengl/filesystem.h>
@@ -29,7 +31,7 @@ int main()
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Textures Exercise 3", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -49,16 +51,16 @@ int main()
 
     // build and compile our shader zprogram
     // ------------------------------------
-    Shader ourShader("4.4.texture.vs", "4.4.texture.fs");
+    Shader ourShader("4.5.texture.vs", "4.5.texture.fs");
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     float vertices[] = {
         // positions          // colors           // texture coords (note that we changed them to 'zoom in' on our texture image)
-         0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   0.55f, 0.55f, // top right
-         0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   0.55f, 0.45f, // bottom right
+         0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   0.56f, 0.56f, // top right
+         0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   0.56f, 0.45f, // bottom right
         -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.45f, 0.45f, // bottom left
-        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.45f, 0.55f  // top left 
+        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.45f, 0.56f  // top left 
     };
     unsigned int indices[] = {
         0, 1, 3, // first triangle

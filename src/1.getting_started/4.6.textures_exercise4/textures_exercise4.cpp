@@ -1,5 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #include <learnopengl/filesystem.h>
@@ -7,15 +9,14 @@
 
 #include <iostream>
 
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow *window);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-// stores how much we're seeing of either texture
-float mixValue = 0.2f;
+float mixit = 0.2f;
 
 int main()
 {
@@ -32,7 +33,7 @@ int main()
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Textures Exercise 4", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -41,6 +42,7 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetKeyCallback(window, key_callback);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -50,10 +52,9 @@ int main()
         return -1;
     }
 
-
     // build and compile our shader zprogram
     // ------------------------------------
-    Shader ourShader("4.5.texture.vs", "4.5.texture.fs");
+    Shader ourShader("4.6.texture.vs", "4.6.texture.fs");
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -98,8 +99,8 @@ int main()
     // texture 1
     // ---------
     glGenTextures(1, &texture1);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    // set the texture wrapping parameters
+    glBindTexture(GL_TEXTURE_2D, texture1); 
+     // set the texture wrapping parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     // set texture filtering parameters
@@ -135,7 +136,7 @@ int main()
     if (data)
     {
         // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
@@ -151,16 +152,12 @@ int main()
     glUniform1i(glGetUniformLocation(ourShader.ID, "texture1"), 0);
     // or set it via the texture class
     ourShader.setInt("texture2", 1);
-
+    //    glUniform1f(glGetUniformLocation(ourShader.ID, "mixit"), 0.2f);
 
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
     {
-        // input
-        // -----
-        processInput(window);
-
         // render
         // ------
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -172,11 +169,9 @@ int main()
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
-        // set the texture mix value in the shader
-        ourShader.setFloat("mixValue", mixValue);
-
         // render container
         ourShader.use();
+        glUniform1f(glGetUniformLocation(ourShader.ID, "mixValue"), mixit);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -200,22 +195,28 @@ int main()
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow *window)
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
-
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-    {
-        mixValue += 0.001f; // change this value accordingly (might be too slow or too fast based on system hardware)
-        if(mixValue >= 1.0f)
-            mixValue = 1.0f;
     }
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-    {
-        mixValue -= 0.001f; // change this value accordingly (might be too slow or too fast based on system hardware)
-        if (mixValue <= 0.0f)
-            mixValue = 0.0f;
+    else if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
+        GLint rastMode[2];
+        glGetIntegerv(GL_POLYGON_MODE, &rastMode[0]);
+
+        // Switch modes depending on current rasterizing mode.
+        if (rastMode[0] == GL_FILL) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+        else {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+    }
+    else if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
+        mixit += 0.02f;
+    }
+    else if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
+        mixit -= 0.02f;
     }
 }
 
