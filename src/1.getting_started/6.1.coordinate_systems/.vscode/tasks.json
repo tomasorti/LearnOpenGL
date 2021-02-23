@@ -1,0 +1,68 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Compile",
+			"type": "shell",
+			"command": "cl.exe",
+			"args": [
+				"/c",
+				"/W3",
+				"/nologo",
+				"/I${workspaceFolder}/../../../includes",
+				"/Zi",
+				"/MDd",
+				"/EHsc",
+				"coordinate_systems.cpp"
+			]
+		},
+		{
+			"label": "Link",
+			"type": "shell",
+			"command": "link.exe",
+			"args": [
+				"/nologo",
+				"/incremental",
+				"/out:${fileDirname}/${fileBasenameNoExtension}.exe",
+				"/LIBPATH:${workspaceFolder}/../../../lib",
+				"glfw3.lib",
+				"opengl32.lib",
+				"glad.lib",
+				"kernel32.lib",
+				"user32.lib",
+				"gdi32.lib",
+				"shell32.lib",
+				"/SUBSYSTEM:CONSOLE",
+				"/NODEFAULTLIB:MSVCRT",
+				"${workspaceFolder}/coordinate_systems.obj"
+			],
+			"dependsOn": [
+				"Compile"
+			]
+		},
+		{
+			"label": "Build",
+			"type": "shell",
+			"dependsOn": [
+				"Link"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "Clean",
+			"type": "shell",
+			"command": "del",
+			"args": [
+				"*.obj",
+				"*.ilk",
+				"*.pdb",
+				"*.exe"
+			],
+			"problemMatcher": []
+		}
+	]
+}

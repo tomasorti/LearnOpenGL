@@ -1,5 +1,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #include <glm/glm.hpp>
@@ -218,7 +219,9 @@ int main()
         glm::mat4 view          = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
         glm::mat4 projection    = glm::mat4(1.0f);
         projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        view       = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        view       = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f*(float)glm::sin((float)glfwGetTime())));
+        view       = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
+
         // pass transformation matrices to the shader
         ourShader.setMat4("projection", projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
         ourShader.setMat4("view", view);
@@ -230,10 +233,30 @@ int main()
             // calculate the model matrix for each object and pass it to shader before drawing
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            ourShader.setMat4("model", model);
+            
+            // different rotation speed for each cube (depends on the index)
+            float speed = i;
+            if (i == 0) { // our central cube spins the fastest
+                speed = 10.0f;
+            } 
+            float rotation = (float)glfwGetTime()*speed*0.4f;
 
+            float rx = 0.1f*(float)(i%2);
+            float ry = 0.1f*(float)(i%4);
+            float rz = 0.1f*(float)(i%6);
+            if (i == 0) { // our central cube is rotated only on y-axis
+                rx = 0.0f; ry = 1.0f; rz = 0.0f;
+            }
+            model = glm::rotate(model, rotation, glm::vec3(rx, ry, rz));
+            
+            // initial rotation different for each cube
+            float initialAngle = 20.0f * i;
+            model = glm::rotate(model, glm::radians(initialAngle), glm::vec3(1.0f, 0.3f, 0.5f));
+
+            // rotate smiley so it is straight at the beginning
+            model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            
+            ourShader.setMat4("model", model);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
