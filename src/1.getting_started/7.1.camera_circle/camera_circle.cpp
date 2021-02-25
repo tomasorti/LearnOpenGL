@@ -1,5 +1,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #include <glm/glm.hpp>
@@ -134,6 +135,31 @@ int main()
     glEnableVertexAttribArray(1);
 
 
+    Shader axisShader("axis.vs", "axis.fs");
+    float axis[] = {
+        0.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,
+        2.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f,
+        0.0f, 2.0f, 0.0f,  0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 2.0f,  0.0f, 0.0f, 1.0f
+    };
+
+    unsigned int aVBO, aVAO;
+    glGenVertexArrays(1, &aVAO);
+    glGenBuffers(1, &aVBO);
+    glBindVertexArray(aVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, aVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(axis), axis, GL_STATIC_DRAW);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+
     // load and create a texture 
     // -------------------------
     unsigned int texture1, texture2;
@@ -224,7 +250,8 @@ int main()
         float radius = 10.0f;
         float camX   = sin(glfwGetTime()) * radius;
         float camZ   = cos(glfwGetTime()) * radius;
-        view = glm::lookAt(glm::vec3(camX, 0.0f, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        view = glm::lookAt(glm::vec3(camX, 3.0f, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        //view = glm::lookAt(glm::vec3(2.0f, 3.0f, 7.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         ourShader.setMat4("view", view);
 
         // render boxes
@@ -241,6 +268,15 @@ int main()
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
+        axisShader.use();
+        //view  = glm::mat4(1.0f);
+        glm::mat4 model = glm::mat4(1.0f);
+        axisShader.setMat4("projection", projection);
+        axisShader.setMat4("view", view);
+        axisShader.setMat4("model", model);
+        glBindVertexArray(aVAO);
+        glDrawArrays(GL_LINES, 0, 6);
+        
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
