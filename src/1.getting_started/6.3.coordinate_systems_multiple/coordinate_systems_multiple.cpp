@@ -114,8 +114,8 @@ int main()
         glm::vec3( 2.4f, -0.4f, -3.5f),
         glm::vec3(-1.7f,  3.0f, -7.5f),
         glm::vec3( 1.3f, -2.0f, -2.5f),
-        glm::vec3( 1.5f,  2.0f, -2.5f),
-        glm::vec3( 1.5f,  0.2f, -1.5f),
+        glm::vec3( 1.5f,  4.0f, 0.0f),
+        glm::vec3( 4.0f,  0.0f, 0.0f),
         glm::vec3(-1.3f,  1.0f, -1.5f)
     };
     unsigned int VBO, VAO;
@@ -132,6 +132,31 @@ int main()
     glEnableVertexAttribArray(0);
     // texture coord attribute
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+
+    Shader axisShader("axis.vs", "axis.fs");
+    float axis[] = {
+        0.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,
+        12.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f,
+        0.0f, 12.0f, 0.0f,  0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 12.0f,  0.0f, 0.0f, 1.0f
+    };
+
+    unsigned int aVBO, aVAO;
+    glGenVertexArrays(1, &aVAO);
+    glGenBuffers(1, &aVBO);
+    glBindVertexArray(aVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, aVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(axis), axis, GL_STATIC_DRAW);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
 
@@ -193,6 +218,8 @@ int main()
     ourShader.setInt("texture2", 1);
 
 
+    glm::mat4 projection = projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -217,10 +244,9 @@ int main()
 
         // create transformations
         glm::mat4 view          = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-        glm::mat4 projection    = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        view       = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f*(float)glm::sin((float)glfwGetTime())));
-        view       = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
+        float tx = 2.0f+2*sin(0.5f*glfwGetTime()-glm::radians(90.0f));
+        glm::vec3 target = glm::vec3(tx, 0.0f, 0.0f);
+        view = glm::lookAt(glm::vec3(2.0f, 2.0f, 6.0f), target, glm::vec3(0.0f, 1.0f, 0.0f));
 
         // pass transformation matrices to the shader
         ourShader.setMat4("projection", projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
@@ -259,6 +285,17 @@ int main()
             ourShader.setMat4("model", model);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
+
+
+        axisShader.use();
+        //view  = glm::mat4(1.0f);
+        glm::mat4 model = glm::mat4(1.0f);
+        axisShader.setMat4("projection", projection);
+        axisShader.setMat4("view", view);
+        axisShader.setMat4("model", model);
+
+        glBindVertexArray(aVAO);
+        glDrawArrays(GL_LINES, 0, 6);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
