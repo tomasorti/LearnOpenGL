@@ -49,9 +49,13 @@ const float BALL_RADIUS = 12.5f;
 class Game
 {
 public:
+    unsigned int            resW, resH;
     // game state
     GameState               State;	
     bool                    Keys[1024];
+    bool                    gamepadButtonA;
+    bool                    gamepadButtonX;
+    float*                  gamepadAxis;
     bool                    KeysProcessed[1024];
     unsigned int            Width, Height;
     std::vector<GameLevel>  Levels;

@@ -148,8 +148,9 @@ void Game::ProcessInput(float dt)
 {
     if (this->State == GAME_MENU)
     {
-        if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
+        if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER] || gamepadButtonX)
         {
+            gamepadButtonX = false;
             this->State = GAME_ACTIVE;
             this->KeysProcessed[GLFW_KEY_ENTER] = true;
         }
@@ -170,8 +171,9 @@ void Game::ProcessInput(float dt)
     }
     if (this->State == GAME_WIN)
     {
-        if (this->Keys[GLFW_KEY_ENTER])
+        if (this->Keys[GLFW_KEY_ENTER] || gamepadButtonX)
         {
+            gamepadButtonX = false;
             this->KeysProcessed[GLFW_KEY_ENTER] = true;
             Effects->Chaos = false;
             this->State = GAME_MENU;
@@ -181,7 +183,7 @@ void Game::ProcessInput(float dt)
     {
         float velocity = PLAYER_VELOCITY * dt;
         // move playerboard
-        if (this->Keys[GLFW_KEY_A])
+        if (this->Keys[GLFW_KEY_A] || gamepadAxis[0] == -1)
         {
             if (Player->Position.x >= 0.0f)
             {
@@ -190,7 +192,7 @@ void Game::ProcessInput(float dt)
                     Ball->Position.x -= velocity;
             }
         }
-        if (this->Keys[GLFW_KEY_D])
+        if (this->Keys[GLFW_KEY_D] || gamepadAxis[0] == 1)
         {
             if (Player->Position.x <= this->Width - Player->Size.x)
             {
@@ -199,8 +201,10 @@ void Game::ProcessInput(float dt)
                     Ball->Position.x += velocity;
             }
         }
-        if (this->Keys[GLFW_KEY_SPACE])
+        if (this->Keys[GLFW_KEY_SPACE] || gamepadButtonA) {
             Ball->Stuck = false;
+            gamepadButtonA = false;
+        }   
     }
 }
 
@@ -230,7 +234,11 @@ void Game::Render()
         Effects->Render(glfwGetTime());
         // render text (don't include in postprocessing)
         std::stringstream ss; ss << this->Lives;
+        std::stringstream rw; rw << this->resW;
+        std::stringstream rh; rh << this->resH;
         Text->RenderText("Lives:" + ss.str(), 5.0f, 5.0f, 1.0f);
+        Text->RenderText("Resolution:" + rw.str() + "x" + rh.str(), 500.0f, 5.0f, 1.0f);
+
     }
     if (this->State == GAME_MENU)
     {
@@ -256,7 +264,7 @@ void Game::ResetLevel()
     else if (this->Level == 3)
         this->Levels[3].Load("levels/four.lvl", this->Width, this->Height / 2);
 
-    this->Lives = 3;
+    this->Lives = 100;
 }
 
 void Game::ResetPlayer()
