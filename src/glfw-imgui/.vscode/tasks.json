@@ -1,0 +1,73 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Compile",
+			"type": "shell",
+			"command": "cl.exe",
+			"args": [
+				"/c",
+				"/W3",
+				"/nologo",
+				"/I${workspaceFolder}",
+				"/I${workspaceFolder}/imgui",
+                "/I${workspaceFolder}/libs/glfw/include",
+                "/I${workspaceFolder}/libs",
+				"/Zi",
+				"/MDd",
+				"/EHsc",
+				"/Fd${workspaceFolder}/Debug/main.pdb",
+				"/Fo:${workspaceFolder}/Debug/",
+				"${workspaceFolder}/main.cpp"
+			]
+		},
+		{
+			"label": "Link",
+			"type": "shell",
+			"command": "link.exe",
+			"args": [
+				"/nologo",
+				"/incremental",
+				"/debug",
+				"/out:${workspaceFolder}/Debug/main.exe",
+				"/LIBPATH:${workspaceFolder}/libs/glfw/lib-vc2010-64",
+				"glfw3.lib",
+				"opengl32.lib",
+				"gdi32.lib",
+				"shell32.lib",
+				"/SUBSYSTEM:CONSOLE",
+				"/NODEFAULTLIB:MSVCRT",
+				"${workspaceFolder}/obj/*.obj",
+				"${workspaceFolder}/Debug/*.obj"
+			],
+			"dependsOn": [
+				"Compile"
+			]
+		},
+		{
+			"label": "Build",
+			"type": "shell",
+			"dependsOn": [
+				"Link"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "Clean",
+			"type": "shell",
+			"command": "del",
+			"args": [
+				"vc*.pdb",
+				"Debug\\*.obj",
+				"Debug\\*.ilk",
+				"Debug\\*.pdb",
+				"Debug\\*.exe"
+			],
+			"problemMatcher": []
+		}
+	]
+}
