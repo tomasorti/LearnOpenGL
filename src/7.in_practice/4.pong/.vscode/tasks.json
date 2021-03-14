@@ -1,0 +1,80 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Compile",
+			"type": "shell",
+			"command": "cl.exe",
+			"args": [
+				"/c",
+				"/DIMGUI_IMPL_OPENGL_LOADER_GLAD",
+				"/D_CRT_SECURE_NO_WARNINGS",
+				"/W3",
+				"/nologo",
+				"/I${workspaceFolder}/../../../includes",
+				"/I${workspaceFolder}/imgui",
+				"/Zi",
+				"/MDd",
+				"/EHsc",
+				"/Fd${workspaceFolder}/bin/pong.pdb",
+				"/Fo:${workspaceFolder}/obj/",
+				"${workspaceFolder}/imgui/*.cpp",
+				"${workspaceFolder}/*.cpp",
+				"${workspaceFolder}/glad.c"
+			]
+		},
+		{
+			"label": "Link",
+			"type": "shell",
+			"command": "link.exe",
+			"args": [
+				"/nologo",
+				"/incremental:no",
+				"/debug",
+				"/out:${workspaceFolder}/bin/pong.exe",
+				"/LIBPATH:${workspaceFolder}/../../../lib",
+				"glfw3.lib",
+				"opengl32.lib",
+				"glad.lib",
+				"kernel32.lib",
+				"user32.lib",
+				"gdi32.lib",
+				"shell32.lib",
+				"irrKlang.lib",
+				"freetype.lib",
+				"/SUBSYSTEM:CONSOLE",
+				"/NODEFAULTLIB:MSVCRT",
+				"${workspaceFolder}/obj/*.obj"
+			],
+			"dependsOn": [
+				"Compile"
+			]
+		},
+		{
+			"label": "Build",
+			"type": "shell",
+			"dependsOn": [
+				"Link"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "Clean",
+			"type": "shell",
+			"command": "del",
+			"args": [
+				"obj\\*.obj",
+				"bin\\*.ilk",
+				"bin\\*.pdb",
+				"bin\\*.exp",
+				"bin\\*.lib",
+				"bin\\*.exe"
+			],
+			"problemMatcher": []
+		}
+	]
+}
