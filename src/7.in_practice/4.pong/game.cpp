@@ -5,6 +5,7 @@ using namespace irrklang;
 #include "game.h"
 #include "resource_manager.h"
 #include "sprite_renderer.h"
+#include "text_renderer.h"
 
 #include <iostream>
 #include <tuple>
@@ -16,13 +17,15 @@ ISoundEngine* SoundEngine = createIrrKlangDevice();
 // Game-related State data
 SpriteRenderer* Renderer;
 SpriteRenderer* RepeatRenderer;
+TextRenderer* TextScore;
+TextRenderer* TextMenu;
 
 float Game::percentage = 0.0f;
 float Game::centerBoard = 0.0f;
 float Game::distance = 0.0f;
 
 Game::Game(unsigned int width, unsigned int height)
-    : State(GAME_ACTIVE), Keys(), Width(width), Height(height)
+    : State(GAME_MENU), Keys(), Width(width), Height(height)
 {}
 
 Game::~Game()
@@ -40,7 +43,7 @@ void Game::Init(bool gp[4])
     }
 
     Texture2D tBall, tPad;
-    { // Shaders & textures
+    { // Shaders & textures & fonts
         ResourceManager::LoadShader("shaders/sprite.vs", "shaders/sprite.fs", nullptr, "sprite");
         glm::mat4 projection = glm::ortho(0.0f, (float)Width, (float)Height, 0.0f, -1.0f, 1.0f);
         ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
@@ -53,6 +56,12 @@ void Game::Init(bool gp[4])
         tPad = ResourceManager::LoadTexture("textures/paddle.png", true, "pad");
         ResourceManager::LoadTexture("textures/wall2.png", false, "wall");
         ResourceManager::LoadTexture("textures/net.png", true, "net");
+
+        TextScore = new TextRenderer(Width, Height);
+        TextScore->Load(FileSystem::getPath("fonts/OCRAEXT.TTF").c_str(), 72);
+
+        TextMenu = new TextRenderer(Width, Height);
+        TextMenu->Load(FileSystem::getPath("fonts/outrideracadital.ttf").c_str(), 32);
     }
 
     { // Game objects
@@ -66,7 +75,7 @@ void Game::Init(bool gp[4])
         ball = new BallObject(ballPos, BALL_RADIUS, BallObject::RandomVelocity(), tBall);
     }
 
-    SoundEngine->play2D(FileSystem::getPath("audio/tranquila.mp3").c_str(), true);
+    SoundEngine->play2D(FileSystem::getPath("audio/menu.mp3").c_str(), true);
 }
 
 void Game::ProcessInput(float dt)
@@ -74,6 +83,9 @@ void Game::ProcessInput(float dt)
     glm::vec2 velocity = PAD_VELOCITY * dt;
     const float* axes;
     int axesCount;
+    const unsigned char* buttons;
+    int buttonCount;
+
 
     // TODO: Velocidad dependiente del Axis.
     // Más cerca del axis 1.0/-1.0, la velocidad aumenta más rápidamente.
@@ -82,18 +94,18 @@ void Game::ProcessInput(float dt)
     // Joystick1 - leftPad
     {
         axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &axesCount);
-        gamepadAxis1 = (float*)axes;
-        if (this->Keys[GLFW_KEY_W] || (gamepadAxis1[1] < -0.1f)) {
+        gamepad1Axis = (float*)axes;
+        if (this->Keys[GLFW_KEY_W] || (gamepad1Axis[1] < -0.1f)) {
             if (leftPad->Position.y >= 0.0f + wallWidth) {
                 leftPad->Position.y -= velocity.y;
             }
         }
-        if (this->Keys[GLFW_KEY_S] || (gamepadAxis1[1] > 0.1f)) {
+        if (this->Keys[GLFW_KEY_S] || (gamepad1Axis[1] > 0.1f)) {
             if (leftPad->Position.y <= Height - leftPad->Size.y - wallWidth) {
                 leftPad->Position.y += velocity.y;
             }
         }
-        if (this->Keys[GLFW_KEY_D] || (gamepadAxis1[0] > 0.1f)) {
+        if (this->Keys[GLFW_KEY_D] || (gamepad1Axis[0] > 0.1f)) {
             if (leftPad->Position.x >= 0.0f && leftPad->Position.x < leftPadLimitX) {
                 leftPad->Position.x += velocity.x;
                 if (leftPad->Position.x >= leftPadLimitX) {
@@ -101,7 +113,7 @@ void Game::ProcessInput(float dt)
                 }
             }
         }
-        if (this->Keys[GLFW_KEY_A] || (gamepadAxis1[0] < -0.1f)) {
+        if (this->Keys[GLFW_KEY_A] || (gamepad1Axis[0] < -0.1f)) {
             if (leftPad->Position.x > 0.0f && leftPad->Position.x <= leftPadLimitX) {
                 leftPad->Position.x -= velocity.x;
                 if (leftPad->Position.x < 0.0f) {
@@ -109,45 +121,51 @@ void Game::ProcessInput(float dt)
                 }
             }
         }
+
+        buttons = glfwGetJoystickButtons(GLFW_JOYSTICK_1, &buttonCount);
+        if (this->Keys[GLFW_KEY_E] || GLFW_PRESS == buttons[0]) {
+            leftReady = true;
+        }
     }
 
     // Joystick 2 - rightPad
     {
         axes = glfwGetJoystickAxes(GLFW_JOYSTICK_2, &axesCount);
-        gamepadAxis2 = (float*)axes;
-        if (this->Keys[GLFW_KEY_UP] || (gamepadAxis2[1] < -0.1f))
+        gamepad2Axis = (float*)axes;
+        if (this->Keys[GLFW_KEY_UP] || (gamepad2Axis[1] < -0.1f))
         {
-            if (rightPad->Position.y >= 0.0f + wallWidth)
-            {
+            if (rightPad->Position.y >= 0.0f + wallWidth) {
                 rightPad->Position.y -= velocity.y;
             }
         }
-        if (this->Keys[GLFW_KEY_DOWN] || (gamepadAxis2[1] > 0.1f))
+        if (this->Keys[GLFW_KEY_DOWN] || (gamepad2Axis[1] > 0.1f))
         {
-            if (rightPad->Position.y <= Height - rightPad->Size.y - wallWidth)
-            {
+            if (rightPad->Position.y <= Height - rightPad->Size.y - wallWidth) {
                 rightPad->Position.y += velocity.y;
             }
         }
-        if (this->Keys[GLFW_KEY_LEFT] || (gamepadAxis2[0] < -0.1f))
+        if (this->Keys[GLFW_KEY_LEFT] || (gamepad2Axis[0] < -0.1f))
         {
-            if (rightPad->Position.x <= Width - rightPad->Size.x && rightPad->Position.x > rightPadLimitX)
-            {
+            if (rightPad->Position.x <= Width - rightPad->Size.x && rightPad->Position.x > rightPadLimitX) {
                 rightPad->Position.x -= velocity.x;
                 if (rightPad->Position.x < rightPadLimitX) {
                     rightPad->Position.x = rightPadLimitX;
                 }
             }
         }
-        if (this->Keys[GLFW_KEY_RIGHT] || (gamepadAxis2[0] > 0.1f))
+        if (this->Keys[GLFW_KEY_RIGHT] || (gamepad2Axis[0] > 0.1f))
         {
-            if (rightPad->Position.x <= Width - rightPad->Size.x && rightPad->Position.x >= rightPadLimitX)
-            {
+            if (rightPad->Position.x <= Width - rightPad->Size.x && rightPad->Position.x >= rightPadLimitX) {
                 rightPad->Position.x += velocity.x;
                 if (rightPad->Position.x >= Width - rightPad->Size.x) {
                     rightPad->Position.x = Width - rightPad->Size.x;
                 }
             }
+        }
+
+        buttons = glfwGetJoystickButtons(GLFW_JOYSTICK_2, &buttonCount);
+        if (this->Keys[GLFW_KEY_ENTER] || GLFW_PRESS == buttons[0]) {
+            rightReady = true;
         }
     }
 }
@@ -227,7 +245,65 @@ void Game::AdjustBallVelocity(BallObject& ball, GameObject& pad)
 
 void Game::Update(float dt)
 {
-    ball->Move(dt, Width, Height, wallWidth, SoundEngine);
+    if (State == GAME_MENU || State == GAME_RESULT) {
+        if (leftReady && rightReady) {
+            if (markedTime == 0) {
+                markedTime = (int)abs(Time);
+                SoundEngine->stopAllSounds();
+                SoundEngine->play2D(FileSystem::getPath("audio/game.mp3").c_str(), true);
+                scoreRightInt = scoreLeftInt = 0;
+                titleFadingOut = true;
+            }
+            if (abs(Time) > markedTime + fadingTime) {
+                markedTime = 0;
+                titleFadingOut = false;
+                State = GAME_ACTIVE;
+                std::cout << "Game starts!" << std::endl;
+            }
+            //std::cout << "bothReadyTime:" << markedTime << " | Time:" << abs(Time) << std::endl;
+        }
+
+        TASK_DO_FOR(blink, 0.5f)
+        TASK_NOT_FOR(blink, 0.5f)
+
+        return;
+    }
+
+    if (goalScored) {
+        if (markedTime == 0) {
+            markedTime = (int)abs(Time);
+            SoundEngine->play2D("audio/whistle.mp3", false);
+        }
+        if (abs(Time) > markedTime + kickTime) {
+            markedTime = 0;
+            goalScored = false;
+        }
+        return;
+    }
+    
+    BallObject::Result result = ball->Move(dt, Width, Height, wallWidth);
+    if (result == BallObject::WALL_HIT) {
+        SoundEngine->play2D("audio/bleep.mp3", false);
+    }
+    else if (result == BallObject::GOAL_LEFT || result == BallObject::GOAL_RIGHT) {
+        if (result == BallObject::GOAL_LEFT) {
+            scoreRightInt++;
+        }
+        else {
+            scoreLeftInt++;
+        }
+        SoundEngine->play2D("audio/goal.mp3", false);
+
+        if (scoreRightInt == 5 || scoreLeftInt == 5) {
+            State = GAME_RESULT;
+            isLeftWinner = scoreLeftInt > scoreRightInt;
+            SoundEngine->stopAllSounds();
+            SoundEngine->play2D(FileSystem::getPath("audio/menu.mp3").c_str(), true);
+            leftReady = rightReady = false;
+            return;
+        }
+        goalScored = true;
+    }
 
     if (ball->leftPadCollision || ball->rightPadCollision) {
         if (ball->Position.x > 1.0f * Width / 4.0f && ball->Position.x < 3.0f * Width / 4.0f) {
@@ -244,12 +320,12 @@ void Game::Update(float dt)
             paused = true;
         }
 
-        diffGamepadAxis = gamepadAxis1[0] - prevGamepadAxis1[0];
+        diffGamepad1Axis = gamepad1Axis[0] - prevGamepad1Axis[0];
         diffLeftPadX = leftPad->Position.x - prevLeftPadX;
         AdjustBallVelocity(*ball, *leftPad);
         ball->Position.x = leftPad->Position.x + leftPad->Size.x;
 
-        leftPadLimitX = leftPad->Position.x;
+        //leftPadLimitX = leftPad->Position.x;
         SoundEngine->play2D(FileSystem::getPath("audio/bleep.mp3").c_str(), false);
     }
 
@@ -261,7 +337,6 @@ void Game::Update(float dt)
         }
         AdjustBallVelocity(*ball, *rightPad);
         ball->Position.x = rightPad->Position.x - ball->Size.x;
-
 
         SoundEngine->play2D(FileSystem::getPath("audio/bleep.mp3").c_str(), false);
     }
@@ -279,12 +354,67 @@ void Game::Render()
 
     leftPad->Draw(*Renderer);
     rightPad->Draw(*Renderer);
-    ball->Draw(*Renderer);
+
+    if (State == GAME_ACTIVE) {
+        if (goalScored) {
+            float rgb[3];
+            for (int i = 0; i < 3; i++) {
+                rgb[i] = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f + 1.0f)));
+            }
+            glm::vec3 go = glm::vec3(rgb[0], rgb[1], rgb[2]);
+            TextMenu->RenderText("Go!", 3.5f * Width / 8.f, Height / 2.0f, 2.0f, go);
+        }
+        else {
+            ball->Draw(*Renderer);
+        }
+    }
+
+    sprintf(scoreLeft, "%d", scoreLeftInt);
+    TextScore->RenderText(scoreLeft, Width / 16.f, wallWidth + 10, 1.0f);
+    sprintf(scoreRight, "%d", scoreRightInt);
+    TextScore->RenderText(scoreRight, 14.0f * Width / 16.f, wallWidth + 10, 1.0f);
+
+    if (State == GAME_MENU || State == GAME_RESULT) {
+        glm::vec3 titleColor = glm::vec3(0.0f, 0.0f, 1.0f);
+        glm::vec3 pressButtonColor = glm::vec3(1.0f, 0.0f, 1.0f);
+        glm::vec3 leftTextColor = leftPad->Color;
+        glm::vec3 rightTextColor = rightPad->Color;
+
+        if (titleFadingOut) {
+            float rgb[3];
+            for (int i = 0; i < 3; i++) {
+                rgb[i] = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f + 1.0f)));
+            }
+            titleColor = glm::vec3(rgb[0], rgb[1], rgb[2]);
+            TextMenu->RenderText("Match starts!", 2.0f * Width / 8.f, Height / 2.0f, 2.0f, titleColor);
+        }
+        else {
+            TextMenu->RenderText("Mega Pong", 2.3f * Width / 8.f, Height / 3.0f, 2.0f, titleColor);
+            
+            IF_TASK(blink)
+                TextMenu->RenderText("Press A button to start", 2.f * Width / 8.f, Height / 2.0f, 1.0f, pressButtonColor);
+            FI_TASK
+
+            if (leftReady) {
+                TextMenu->RenderText("Left Player Ready!", Width / 16.f, 150.f + Height / 2.0f, 1.0f, leftTextColor);
+            }
+            if (rightReady) {
+                TextMenu->RenderText("Right Player Ready!", 9 * Width / 16.f, 150.f + Height / 2.0f, 1.0f, rightTextColor);
+            }
+
+            if (State == GAME_RESULT) {
+                char winner[128];
+                sprintf(winner, "Winner player %s!", isLeftWinner ? "Left" : "Right");
+                glm::vec3 winnerColor = isLeftWinner ? leftPad->Color : rightPad->Color;
+                TextMenu->RenderText(winner, 2.f * Width / 8.f, 400.0f + Height / 2.0f, 1.0f, winnerColor);
+            }
+        }
+    }
 }
 
 void Game::PaintLetterBox(int fsWidth, int fsHeight, int fsStartX)
 {
     Texture2D tAny = ResourceManager::GetTexture("wall");
-    Renderer->DrawSprite(tAny, glm::vec2(-(float)fsStartX, 0.0f), glm::vec2(0.0f, fsHeight), 0.0f, glm::vec3(0.0f, 0.0f, 0.0f));
+    Renderer->DrawSprite(tAny, glm::vec2(-(float)fsStartX, 0.0f), glm::vec2((float)fsStartX+100.f, fsHeight), 0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
 }
 

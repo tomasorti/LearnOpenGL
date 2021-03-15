@@ -27,33 +27,30 @@ glm::vec2 BallObject::RandomVelocity()
     return glm::vec2(vx, vy);
 }
 
-glm::vec2 BallObject::Move(float dt, unsigned int window_width, unsigned int window_height, float wallWidth, ISoundEngine* SoundEngine)
+BallObject::Result BallObject::Move(float dt, unsigned int window_width, unsigned int window_height, float wallWidth)
 {
     // move the ball
     this->Position += this->Velocity * dt;
 
-    // if (this->Position.x > 15.0f * window_width / 16.0f && this->Position.x < 17.0f * window_width / 16.0f) {
-    //     leftPadCollision = rightPadCollision = false;
-    // }
-
     if (this->Position.x <= 0.0f - Size.x) {
         this->Position = INITIAL_POSITION;
         this->Velocity = RandomVelocity();
+        return GOAL_LEFT;
     }
     else if (this->Position.x >= window_width) {
         this->Position = INITIAL_POSITION;
         this->Velocity = RandomVelocity();
+        return GOAL_RIGHT;
     }
-    if (this->Position.y <= 0.0f + wallWidth) {
+    else if (this->Position.y <= 0.0f + wallWidth) {
         this->Velocity.y = -this->Velocity.y;
         this->Position.y = wallWidth;
-        SoundEngine->play2D("audio/bleep.mp3", false);
+        return WALL_HIT;
     }
     else if (this->Position.y >= window_height - wallWidth - this->Size.y) {
         this->Velocity.y = -this->Velocity.y;
         this->Position.y = window_height - this->Size.y - wallWidth;
-        SoundEngine->play2D("audio/bleep.mp3", false);
+        return WALL_HIT;
     }
-
-    return this->Position;
+    return NONE;
 }
